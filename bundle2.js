@@ -11166,6 +11166,7 @@ function replicate (feed, opts) {
     peer.feed = feed
     peer.stream = stream.feed(feed.key, {peer: peer})
 
+    peer.remoteId = stream.remoteId
     stream.on('handshake', function () {
       peer.remoteId = stream.remoteId
     })
@@ -16740,32 +16741,38 @@ var seed = 'ws://localhost:30000'
 var archive = hyperdrive(ram, key, {sparse: true})
 var speedometer = require('speedometer');
 var prettierBytes = require('prettier-bytes');
+window.totalConnections = {
+  upSpeed: speedometer(20),
+  downSpeed: speedometer(20)
+}
+function initPeer(peerId){
+ return {
+   id: peerId,
+   upSpeed: speedometer(20),
+   downSpeed: speedometer(20)
+ }
+}
 
+window.p2pArchive = archive;
+window.peers = {};
 archive.on('content', function () {
-  var upSpeed = speedometer();
-  var downSpeed = speedometer();
   archive.content.on('upload', function (i, data, peer) {
-    // upspsed
-    console.log("up", prettierBytes(upSpeed(data.length))+ "/s");
-    // downspeed
-    console.log("down", prettierBytes(downSpeed()));
-    // nr of connections
-    console.log("nr of peers", archive.content.peers.length);
+
+    // if peerid doesnt exist in list, initPeer or fetchPeer
+
+    // then set upspeed both for total and individual peer
+    window.totalConnections.upSpeed(data.length);
   })
   archive.content.on('download', function (i, data, peer) {
-    // downspeed
-    console.log("down", prettierBytes(downSpeed(data.length)));
-    // upspseed
-    console.log("up", prettierBytes(upSpeed()));
-    // nr of total connections
-    console.log("nr of peers", archive.content.peers.length);
+    // if peerid doesnt exist in list, initPeer or fetchPeer
+    // console.log("", peer);
+    // then set downspeed both for total and individual peer
+    window.totalConnections.downSpeed(data.length);
   })
-})
-
 archive.metadata.on('download', function (i, b, p) {
   // console.log(p)
 })
-
+})
 
 archive.on('ready', function () {
   if (window.location.toString().indexOf('noseed') === -1) {

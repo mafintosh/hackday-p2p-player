@@ -42,7 +42,7 @@
 /************************************************************************/
 /******/ ([
 /* 0 */
-/***/ (function(module, exports) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	"use strict";
 	// hls
@@ -131,10 +131,14 @@
 	var totalConnections = document.getElementById("total-connections");
 	var connectionsList = document.getElementById("connections-list");
 
-	function updateTotal(connections) {
-	  totalConnections.innerHTML = "Total Connections: " + connections;
+	function updateTotal(connections, down, up) {
+	  console.log("set innerhtml", connections);
+	  var totalConn = '<div class="list-data"> | Total Connections: ' + connections + '</div>';
+	  var down = '<div class="list-data"> | down ' + down + "/s </div>";
+	  var up = '<div class="list-data"> | up' + up + "/s </div>";
+	  totalConnections.innerHTML = totalConn + down + up;
 	}
-
+	function updateTotalSpeed(down, up) {}
 	function addToConnectionList(connection) {
 	  var connectionId = connection.id ? connection.id : "unnamed";
 	  var connectionUp = connection.upload ? connection.upload : "? kbs";
@@ -158,11 +162,60 @@
 	    addToConnectionList(connection);
 	  });
 	}
+	var prettierBytes = __webpack_require__(1);
+	// global update state
+	setInterval(function () {
+	  console.log("global upspeed", prettierBytes(window.totalConnections.upSpeed()));
+	  console.log("global downspeed", prettierBytes(window.totalConnections.downSpeed()));
+	  if (window.p2pArchive && window.p2pArchive.content) {
+	    console.log("nr of peers", window.p2pArchive.content.peers.length);
+	    updateTotal(window.p2pArchive.content.peers.length, prettierBytes(window.totalConnections.downSpeed()), prettierBytes(window.totalConnections.upSpeed()));
+	  }
+	}, 2000);
 
 	updateTotal("1");
 	addToConnectionList({ "id": "myId", "upload": "500 kbs", "download": "600 kbs" });
 	addToConnectionList({ "id": "myId", "upload": "500 kbs", "download": "600 kbs" });
 	updateMonitor([{ "id": "myId", "upload": "666 kbs", "download": "666 kbs" }, { "id": "myId", "upload": "666 kbs", "download": "666 kbs" }, { "id": "myId", "upload": "666 kbs", "download": "666 kbs" }, { "id": "myId", "upload": "666 kbs", "download": "666 kbs" }]);
+
+/***/ }),
+/* 1 */
+/***/ (function(module, exports) {
+
+	'use strict';
+
+	var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
+	module.exports = prettierBytes;
+
+	function prettierBytes(num) {
+	  if (typeof num !== 'number' || isNaN(num)) {
+	    throw new TypeError('Expected a number, got ' + (typeof num === 'undefined' ? 'undefined' : _typeof(num)));
+	  }
+
+	  var neg = num < 0;
+	  var units = ['B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
+
+	  if (neg) {
+	    num = -num;
+	  }
+
+	  if (num < 1) {
+	    return (neg ? '-' : '') + num + ' B';
+	  }
+
+	  var exponent = Math.min(Math.floor(Math.log(num) / Math.log(1000)), units.length - 1);
+	  num = Number(num / Math.pow(1000, exponent));
+	  var unit = units[exponent];
+
+	  if (num >= 10 || num % 1 === 0) {
+	    // Do not show decimals when the number is two-digit, or if the number has no
+	    // decimal component.
+	    return (neg ? '-' : '') + num.toFixed(0) + ' ' + unit;
+	  } else {
+	    return (neg ? '-' : '') + num.toFixed(1) + ' ' + unit;
+	  }
+	}
 
 /***/ })
 /******/ ]);
