@@ -68,6 +68,13 @@ var hqBtn = videojs.extend(Button, {
   }
 });
 
+window.p2p = p2p
+
+function p2p () {
+  player.src({type: 'application/x-mpegURL', src: mSeedPeer });
+  player.play()
+}
+
 // Register the new component with videojs
 Button.registerComponent('hqBtn', hqBtn);
 
